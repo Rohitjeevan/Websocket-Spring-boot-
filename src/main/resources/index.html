@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.5.0/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@2.5.2/lib/stomp.js"></script>
+
+</head>
+<body>
+
+<div>
+    <button onclick="">Click</button>
+</div>
+
+<div>
+    <input type="text" id="name" placeholder=" Enter Name">
+    <input type="text" id="message" placeholder="Enter message ">
+</div>
+
+
+<h3>message</h3>
+<ul id="myList"></ul>
+
+
+<div>
+    <button onclick="submit()""> Send </button>
+
+</div>
+
+</body>
+
+
+<script>
+    var stompClient = null;
+    connect();
+
+    function connect(){
+        const socket = new SockJS("http://localhost:8082/ws");
+        stompClient = Stomp.over(socket);
+        stompClient.connect({},function(){
+            console.log("connected .... ");
+
+            stompClient.subscribe("/topic/ping",function(message){
+                console.log("Recevied a new message from server ",message);
+            })
+
+            stompClient.subscribe("/topic/scheduled",function(message){
+                console.log("Perodic message from server ",message);
+            })
+
+            stompClient.subscribe("/topic/chat",function(message){
+                console.log("message  server ....   ",message.body.name)
+                const list = document.getElementById("myList");
+                const li = document.createElement("li");
+                li.textContent =  message.body;
+                list.appendChild(li);
+
+            })
+
+        })
+    }
+
+    function submit(){
+        const name = document.getElementById("name").value;
+        const message = document.getElementById("message").value;
+
+        stompClient.send("/app/chat",{},JSON.stringify({name,message}))
+
+        //stompClient.send("/app/ping",{},JSON.stringify({data:value}))
+    }
+
+</script>
+</html>
